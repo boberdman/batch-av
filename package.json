@@ -1,0 +1,11 @@
+{
+  "name": "batch-address-validation",
+  "version": "1.0.0",
+  "description": "Batch Address Validation Utility",
+  "main": "main.js",
+  "scripts": {
+    "test": "test"
+  },
+  "author": "Bob Erdman",
+  "license": "ISC"
+}
