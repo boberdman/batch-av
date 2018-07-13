@@ -4,11 +4,12 @@
   "description": "Batch Address Validation Utility",
   "main": "main.js",
   "scripts": {
-    "test": "test"
+    "start": "electron ."
   },
   "author": "Bob Erdman",
   "license": "ISC",
   "dependencies": {
+    "avatax": "^18.5.1",
     "electron": "^2.0.4"
   }
 }
