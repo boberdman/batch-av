@@ -186,7 +186,7 @@ function openFile() {
   worksheet = workbook.Sheets['Sheet1'];
   addressesToValidate = XLSX.utils.sheet_to_json(worksheet);
 }
-//function to count JSON array length
+//function to count JSON array length, number of returned results in the address validation
 function objectLength(obj) {
   var result = 0;
   for(var prop in obj) {
