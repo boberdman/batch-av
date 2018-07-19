@@ -17,7 +17,8 @@ const {dialog} = require('electron');
 // Set AvaTax Credentials 
 let customerAccountNumber;
 let customerSoftwareLicenseKey;
-let document;
+let validatedAddressResults;
+
 
 const avaTaxConfig = {
   appName:"Bob's Batch Address Validator",
@@ -106,12 +107,12 @@ const mainMenuTemplate = [
         createAddWindow();
       }
     },
-    {
-      label: 'Test Credentials',
-      click(){
-        testAvaTaxCredentials();
-      }
-    },
+    // {
+    //   label: 'Test Credentials',
+    //   click(){
+    //     testAvaTaxCredentials();
+    //   }
+    // },
     {
       label: 'Open File',
       accelerator: process.platform == 'darwin' ? 'Command+O' : 'Ctrl+O',
@@ -123,6 +124,12 @@ const mainMenuTemplate = [
       label: 'Validate Address', 
       click(){
         validateAddress();
+      }
+    },
+    {
+      label: 'Save File', 
+      click(){
+        saveFile();
       }
     },
     {
@@ -167,7 +174,8 @@ function testAvaTaxCredentials() {
   } else{
   console.log(customerAccountNumber);
   console.log(customerSoftwareLicenseKey);
-}}
+}
+}
 
 
 // Function to open up a file
@@ -175,29 +183,87 @@ function openFile() {
    
   var o = dialog.showOpenDialog({ properties: ['openFile'] });
   var workbook = XLSX.readFile(o[0]);
-  var worksheet = workbook.Sheets['Sheet1'];
+  worksheet = workbook.Sheets['Sheet1'];
   addressesToValidate = XLSX.utils.sheet_to_json(worksheet);
+}
+//function to count JSON array length
+function objectLength(obj) {
+  var result = 0;
+  for(var prop in obj) {
+    if (obj.hasOwnProperty(prop)) {
+    // or Object.prototype.hasOwnProperty.call(obj, prop)
+      result++;
+    }
+  }
+  return result;
 }
 
 // Call AvaTax to validate an address.
 function validateAddress() {
+
   if (customerAccountNumber == undefined){
-    dialog.info('You must set your credentials before testing');
+    dialog.info('Whoa buddy! You must set your credentials before testing');
   } else{   
   // Address to be resolved
-  // OK, now that you've got this to work for a single row, you'll need to loop through all of the records in the JSON object and write the returned values back to another object and then figure out how to save that object back to a file.
-    const address = {
-    line1: addressesToValidate[0].line1,
-    city: addressesToValidate[0].city,
-    postalCode: addressesToValidate[0].postalCode,
-    region: addressesToValidate[0].region,
-    country: addressesToValidate[0].country
+  for (var i=0, len =  objectLength(addressesToValidate); i < len; i++){
+    var address = {
+    line1: addressesToValidate[i].line1,
+    city: addressesToValidate[i].city,
+    postalCode: addressesToValidate[i].postalCode,
+    region: addressesToValidate[i].region,
+    country: addressesToValidate[i].country
     };
-   
-    return avaTaxClient.resolveAddress(address)
+    // Call Avalara to validate the address
+    avaTaxClient.resolveAddress(address)
     .then(result => {
+      console.log(result);      
       // address validation result
-      console.log(result);
+      if (resultValidatedAddressResults === undefined || resultValidatedAddressResults.resolutionQuality == 0 || resultValidatedAddressResults.resolutionQuality == undefined){
+        var resultValidatedAddressResults = result;
+        resultsWorksheet = XLSX.utils.json_to_sheet(validatedAddressResults, {header: resultValidatedAddressResults.keys});
+
+      } else {
+        resultValidatedAddressResults.add(result);
+        //make the worksheet
+        resultsWorksheet.add(resultsWorksheet = XLSX.utils.json_to_sheet(validatedAddressResults, {skipHeader: true}));
+
+      };
+      validatedAddressResults = resultValidatedAddressResults;
     });
+    
+    
+  };
+
+};
+return validatedAddressResults;
+console.log(validatedAddressResults);
+console.log(resultsWorksheet);
+
+
+
+
+
+
+
 }
+
+// Save Validated Addresses
+function saveFile(){
+  console.log('did it work?');
+  console.log(validatedAddressResults);
+  if (validatedAddressResults == null || validatedAddressResults == undefined){
+    dialog.showErrorBox('Nothing to Save','try validating some addresses first')
+  } else {
+    /* show a file-save dialog and write the workbook */
+    // Create New Workbook
+    // Convert validation results from JSON to Sheet
+    let resultsWorkbook;
+     //resultsWorksheet = XLSX.utils.json_to_sheet(validatedAddressResults);
+    // Add data to the workbook worksheet 
+    resultsWorkbook.Sheets[resultsWorksheet];
+    console.log(resultsWorkbook);
+    var o = dialog.showSaveDialog();
+      XLSX.writeFile(resultsWorkbook,'Validation Results.xlsx', o);
+    console.log (resultsWorkbook); 
+  };
 }
