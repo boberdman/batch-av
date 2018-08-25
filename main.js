@@ -17,7 +17,7 @@ const {dialog} = require('electron');
 // Set AvaTax Credentials 
 let customerAccountNumber;
 let customerSoftwareLicenseKey;
-let validatedAddressResults;
+var validatedAddressResults = [];
 
 
 const avaTaxConfig = {
@@ -185,6 +185,7 @@ function openFile() {
   var workbook = XLSX.readFile(o[0]);
   worksheet = workbook.Sheets['Sheet1'];
   addressesToValidate = XLSX.utils.sheet_to_json(worksheet);
+  console.log(addressesToValidate);
 }
 //function to count JSON array length, number of returned results in the address validation
 function objectLength(obj) {
@@ -216,54 +217,38 @@ function validateAddress() {
     // Call Avalara to validate the address
     avaTaxClient.resolveAddress(address)
     .then(result => {
-      console.log(result);      
       // address validation result
-      if (resultValidatedAddressResults === undefined || resultValidatedAddressResults.resolutionQuality == 0 || resultValidatedAddressResults.resolutionQuality == undefined){
-        var resultValidatedAddressResults = result;
-        resultsWorksheet = XLSX.utils.json_to_sheet(validatedAddressResults, {header: resultValidatedAddressResults.keys});
-
+       if (result === undefined || result.resolutionQuality == 0 || result.resolutionQuality == undefined){
+        //resultsWorksheet = XLSX.utils.json_to_sheet(validatedAddressResults, {header: resultValidatedAddressResults.keys});
+        dialog.showErrorBox("whoops! someting went wrong")
       } else {
-        resultValidatedAddressResults.add(result);
-        //make the worksheet
-        resultsWorksheet.add(resultsWorksheet = XLSX.utils.json_to_sheet(validatedAddressResults, {skipHeader: true}));
-
+        validatedAddressResults.push(result);
+   
       };
-      validatedAddressResults = resultValidatedAddressResults;
     });
-    
-    
   };
-
 };
-return validatedAddressResults;
-console.log(validatedAddressResults);
-console.log(resultsWorksheet);
-
-
-
-
-
-
-
 }
 
 // Save Validated Addresses
 function saveFile(){
-  console.log('did it work?');
   console.log(validatedAddressResults);
   if (validatedAddressResults == null || validatedAddressResults == undefined){
     dialog.showErrorBox('Nothing to Save','try validating some addresses first')
   } else {
     /* show a file-save dialog and write the workbook */
     // Create New Workbook
-    // Convert validation results from JSON to Sheet
-    let resultsWorkbook;
-     //resultsWorksheet = XLSX.utils.json_to_sheet(validatedAddressResults);
-    // Add data to the workbook worksheet 
-    resultsWorkbook.Sheets[resultsWorksheet];
-    console.log(resultsWorkbook);
-    var o = dialog.showSaveDialog();
-      XLSX.writeFile(resultsWorkbook,'Validation Results.xlsx', o);
-    console.log (resultsWorkbook); 
-  };
+    /* make the worksheet */
+    var ws = XLSX.utils.aoa_to_sheet(validatedAddressResults);
+      console.log("this is the worksheet output")
+      console.log(ws);
+
+      /* add worksheet to workbook */
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Validated_Results");
+      console.log("this is the workbook output");
+      console.log(wb);
+   
+      var o = dialog.showSaveDialog();
+      XLSX.writeFile(wb, o);  };
 }
