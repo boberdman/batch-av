@@ -17,7 +17,8 @@ const {dialog} = require('electron');
 // Set AvaTax Credentials 
 let customerAccountNumber;
 let customerSoftwareLicenseKey;
-var validatedAddressResults = [];
+var validatedAddressResults=[];
+var formattedResults=[];
 
 
 const avaTaxConfig = {
@@ -223,23 +224,137 @@ function validateAddress() {
         dialog.showErrorBox("whoops! someting went wrong")
       } else {
         validatedAddressResults.push(result);
-   
       };
     });
   };
 };
 }
 
+//shortcut
+
+var validatedAddressResults = [{
+  "address": {
+      "line1": "4215 rosebud court",
+      "city": "pensacola",
+      "region": "FL",
+      "country": "US",
+      "postalCode": "32504"
+  },
+  "validatedAddresses": [
+      {
+          "addressType": "StreetOrResidentialAddress",
+          "line1": "Street 1",
+          "line2": "",
+          "line3": "",
+          "city": "PENSACOLA",
+          "region": "FL",
+          "country": "US",
+          "postalCode": "32504-8447",
+          "latitude": 30.481742,
+          "longitude": -87.171119
+      }
+  ],
+  "coordinates": {
+      "latitude": 30.481742,
+      "longitude": -87.171119
+  },
+  "resolutionQuality": "Intersection",
+  "taxAuthorities": [
+      {
+          "avalaraId": "16",
+          "jurisdictionName": "FLORIDA",
+          "jurisdictionType": "State",
+          "signatureCode": "AKUY"
+      },
+      {
+          "avalaraId": "386",
+          "jurisdictionName": "ESCAMBIA",
+          "jurisdictionType": "County",
+          "signatureCode": "ALFC"
+      }
+  ]
+},
+{
+  "address": {
+      "line1": "4215 rosebud court",
+      "city": "pensacola",
+      "region": "FL",
+      "country": "US",
+      "postalCode": "32504"
+  },
+  "validatedAddresses": [
+      {
+          "addressType": "StreetOrResidentialAddress",
+          "line1": "Street 2",
+          "line2": "",
+          "line3": "",
+          "city": "PENSACOLA",
+          "region": "FL",
+          "country": "US",
+          "postalCode": "32504-8447",
+          "latitude": 30.481742,
+          "longitude": -87.171119
+      }
+  ],
+  "coordinates": {
+      "latitude": 30.481742,
+      "longitude": -87.171119
+  },
+  "resolutionQuality": "Intersection",
+  "taxAuthorities": [
+      {
+          "avalaraId": "16",
+          "jurisdictionName": "FLORIDA",
+          "jurisdictionType": "State",
+          "signatureCode": "AKUY"
+      },
+      {
+          "avalaraId": "386",
+          "jurisdictionName": "ESCAMBIA",
+          "jurisdictionType": "County",
+          "signatureCode": "ALFC"
+      }
+  ]
+}
+];
+console.log(console.dir(validatedAddressResults));
 // Save Validated Addresses
 function saveFile(){
-  console.log(validatedAddressResults);
+  console.log('the validated address array is:' + validatedAddressResults.length + ' results long');
+
   if (validatedAddressResults == null || validatedAddressResults == undefined){
     dialog.showErrorBox('Nothing to Save','try validating some addresses first')
   } else {
+    //take the raw results from avatax and put them into a sinlge level array.
+    for (var i=0, len =  objectLength(validatedAddressResults); i < len; i++){
+      var validatedAddress = {
+      line1: validatedAddressResults[i].address.line1,
+      city: validatedAddressResults[i].address.city,
+      postalCode: validatedAddressResults[i].address.postalCode,
+      region: validatedAddressResults[i].address.region,
+      country: validatedAddressResults[i].address.country,
+      validatedAddressType: validatedAddressResults[i].validatedAddresses[0].addressType,
+      validatedLine1: validatedAddressResults[i].validatedAddresses[0].line1,
+      validatedCity: validatedAddressResults[i].validatedAddresses[0].city,
+      validatedPostalCode: validatedAddressResults[i].validatedAddresses[0].postalCode,
+      validatedRegion: validatedAddressResults[i].validatedAddresses[0].region,
+      validatedLatitude: validatedAddressResults[i].coordinates.latitude,
+      validatedLongitude: validatedAddressResults[i].coordinates.longitude,
+      validatedResolutionQuality: validatedAddressResults[i].resolutionQuality
+    };
+      // Call Avalara to validate the address
+      
+      formattedResults.push(validatedAddress);
+     
+        };
+    
+    
+   console.log(formattedResults); 
     /* show a file-save dialog and write the workbook */
     // Create New Workbook
     /* make the worksheet */
-    var ws = XLSX.utils.aoa_to_sheet(validatedAddressResults);
+    var ws = XLSX.utils.aoa_to_sheet(formattedResults);
+
       console.log("this is the worksheet output")
       console.log(ws);
 

@@ -15,6 +15,7 @@
     "electron": "^2.0.5",
     "exceljs": "^1.5.1",
     "fs": "0.0.1-security",
+    "json2csv": "^4.2.1",
     "remote": "^0.2.6",
     "save": "^2.3.2",
     "xlsx": "^0.13.2",
